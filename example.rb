@@ -16,7 +16,7 @@ xml = %{
       <name>Rachel Zane</name>
       <age>30</age>
     </friend>
-  </suits>
+  </profile>
 }
 
 template = Tox.dsl do
@@ -52,3 +52,5 @@ v = template.parse(xml)
 
 template.render(v)
 # Outputs input xml
+
+p v

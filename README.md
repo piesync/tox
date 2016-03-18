@@ -21,7 +21,7 @@ xml = %{
       <name>Rachel Zane</name>
       <age>30</age>
     </friend>
-  </suits>
+  </profile>
 }
 
 template = Tox.dsl do
