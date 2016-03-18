@@ -1,5 +1,6 @@
 require 'test_helper'
 require 'benchmark'
+require 'stringio'
 
 class ToxTest < Minitest::Test
   def test_empty
@@ -58,6 +59,17 @@ class ToxTest < Minitest::Test
         <name>你好世界</name>
       },
       "你好世界"
+    ) do
+      el(:name, text)
+    end
+  end
+
+  def test_io
+    test_case_parse(
+      StringIO.new(%{
+        <name>Mike</name>
+      }),
+      "Mike"
     ) do
       el(:name, text)
     end
