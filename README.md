@@ -1,6 +1,6 @@
 # Tox
 
-Tox is a high performance XML parser and renderer for Ruby. It's best explained using an example:
+Tox is a high performance XML parser and renderer for Ruby based on [Ox](https://github.com/ohler55/ox). It's best explained using an example:
 
 ```ruby
 require 'tox'
@@ -90,3 +90,7 @@ Performance tests can be enabled using:
 ```
 PERFORMANCE=true rake
 ```
+
+## License
+
+MIT
