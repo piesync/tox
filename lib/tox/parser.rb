@@ -3,10 +3,11 @@ module Tox
     def initialize(t)
       @t = [t]
       @s = []
+      @i = 0 # Number of levels ignoring
     end
 
     def start_element(name)
-      push_child(t, :elements, name, nil)
+      push_child(@t.last, :elements, name, nil)
     end
 
     def end_element(name)
@@ -14,12 +15,12 @@ module Tox
     end
 
     def attr(name, str)
-      push_child(t, :attributes, name, str)
+      push_child(@t.last, :attributes, name, str)
       fold
     end
 
     def text(str)
-      push_child(t, :text, :text, str.force_encoding('UTF-8'))
+      push_child(@t.last, :text, :text, str.force_encoding('UTF-8'))
       fold
     end
 
@@ -29,44 +30,49 @@ module Tox
 
     protected
 
-    def t
-      @t.last
-    end
-
     def push(t, v)
-      @t.push(t)
-      @s.push(v)
+      @t << t
+      @s << v
     end
 
     def push_child(t, cat, name, v)
-      if t && t[cat] && t[cat][name]
-        push(t[cat][name], v)
+      if n = (t && t[cat] && t[cat][name])
+        push(n, v)
       else
-        push(nil, nil)
+        @i += 1
       end
     end
 
     def fold
-      t = @t.pop
-      vi, vo = @s.pop, @s.pop
+      if @i > 0
+        @i -= 1
+      else
+        t = @t.pop
+        vi, vo = @s.pop, @s.pop
 
-      @s.push(merge(t, vi, vo))
+        @s.push(merge(t, vi, vo))
+      end
     end
 
     def merge(t, vi, vo)
-      return vo if t.nil?
+      merge   = t[:merge]
+      collect = t[:collect]
 
-      if t[:collect] && t[:merge]
+      if collect && merge
         vo ||= {}
-        vo.merge!({ t[:merge] => [vi] }) do |k, o, n|
-          o + n
+        if vo[merge]
+          vo[merge] = vo[merge].concat([vi])
+        else
+          vo[merge] = [vi]
         end
-      elsif t[:collect]
+        vo
+      elsif collect
         vo ||= []
         vo << vi
-      elsif t[:merge]
+      elsif merge
         vo ||= {}
-        vo.merge!({ t[:merge] => vi })
+        vo[merge] = vi
+        vo
       else # pass up
         vi
       end
