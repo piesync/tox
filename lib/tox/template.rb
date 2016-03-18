@@ -1,12 +1,13 @@
 module Tox
   class Template
     module DSL
-      def self.el(name, sub)
+      def self.el(name, sub, ns = {})
         {
           cat: :elements,
-          name: name,
+          name: name.to_sym,
           collect: false,
-          sub: sub
+          sub: sub,
+          ns: ns
         }
       end
 
@@ -17,7 +18,7 @@ module Tox
       def self.at(name)
         {
           cat: :attributes,
-          name: name,
+          name: name.to_sym,
           collect: false,
           sub: {}
         }
@@ -60,18 +61,17 @@ module Tox
       if t[:cat] && t[:cat].is_a?(Symbol)
         {
           t[:cat] => {
-            t[:name] => invert(t[:sub]).merge(collect: t[:collect])
+            t[:name] => invert(t[:sub]).merge(
+              merge: t[:merge],
+              collect: t[:collect]
+            )
           }
         }
       else
         t.inject({}) do |h, (wrap, it)|
-          h[it[:cat]] ||= {}
-          h[it[:cat]].merge!({
-            it[:name] => invert(it[:sub]).merge({
-              merge: wrap, collect: it[:collect]
-            })
-          })
-          h
+          h.merge!(invert(it.merge(merge: wrap))) do |k, o, n|
+            o.merge(n)
+          end
         end
       end
     end

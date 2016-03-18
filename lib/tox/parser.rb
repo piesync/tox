@@ -19,7 +19,7 @@ module Tox
     end
 
     def text(str)
-      push_child(t, :text, :text, str)
+      push_child(t, :text, :text, str.force_encoding('UTF-8'))
       fold
     end
 

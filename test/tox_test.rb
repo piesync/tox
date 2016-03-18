@@ -13,6 +13,23 @@ class ToxTest < Minitest::Test
     end
   end
 
+  def test_empty_nested
+    test_case(
+      %{
+        <name>
+          <first/>
+          <last>Ross</last>
+        </name>
+      },
+      { first: nil, last: 'Ross' }
+    ) do
+      el(:name, {
+        first: el(:first, text),
+        last: el(:last, text),
+      })
+    end
+  end
+
   def test_blank
     test_case(
       %{
@@ -30,6 +47,17 @@ class ToxTest < Minitest::Test
         <name>Mike</name>
       },
       "Mike"
+    ) do
+      el(:name, text)
+    end
+  end
+
+  def test_special_chars
+    test_case(
+      %{
+        <name>你好世界</name>
+      },
+      "你好世界"
     ) do
       el(:name, text)
     end
@@ -210,7 +238,11 @@ class ToxTest < Minitest::Test
     test_case_asym(
       %{
         <name>
-          <first>Mike</first>
+          <first a='true'>Mike</first>
+          <ignored/>
+          <deep>
+            <ignored b='4'>true</ignored>
+          </deep>
           <last>Ross</last>
         </name>
       },
@@ -303,22 +335,14 @@ class ToxTest < Minitest::Test
     end
   end
 
-  def test_performance
-    if ENV['PERFORMANCE']
-      template = Tox::Template.dsl do
-        el(:profile, {
-          f: el(:first, text),
-          l: el(:last, text),
-          friend_firstnames: el(:friends, mel(:friend, el(:first, text)))
-        })
-      end
-
-      xml = %{
+  def test_complex_attr
+    test_case(
+      %{
         <profile>
           <first>Mike</first>
           <last>Ross</last>
           <friends>
-            <friend>
+            <friend age="40">
               <first>Harvey</first>
               <last>Specter</last>
             </friend>
@@ -328,25 +352,76 @@ class ToxTest < Minitest::Test
             </friend>
           </friends>
         </profile>
-      }
-
-      value = {
+      },
+      {
         f: 'Mike',
         l: 'Ross',
-        friend_firstnames: ['Harvey', 'Louis']
+        friends: [
+          {
+            f: 'Harvey',
+            l: 'Specter',
+            age: '40'
+          },
+          {
+            f: 'Louis',
+            l: 'Litt'
+          }
+        ]
       }
+    ) do
+      el(:profile, {
+        f: el(:first, text),
+        l: el(:last, text),
+        friends: el(:friends, mel(:friend, {
+          f: el(:first, text),
+          l: el(:last, text),
+          age: at(:age)
+        }))
+      })
+    end
+  end
+
+  def test_namespaces
+    test_case(
+      %{
+        <name xmlns="a" xmlns:b="c">Mike</name>
+      },
+      {
+        name: 'Mike'
+      }
+    ) do
+      el(:name, {
+        name: text
+      }, {
+        nil => 'a',
+        'b' => 'c'
+      })
+    end
+  end
+
+  GOOGLE_BATCH_XML = File.read(
+    File.expand_path('../cases/google_batch.xml', __FILE__)
+  )
+
+  GOOGLE_BATCH_TPL = Tox::Template.new(Tox::Template::DSL.module_eval(
+    File.read(File.expand_path('../cases/google_batch.rb', __FILE__))
+  ))
+
+  def test_performance
+    if ENV['PERFORMANCE']
+      value = GOOGLE_BATCH_TPL.parse(GOOGLE_BATCH_XML)
 
       puts
       Benchmark.bm do |x|
         x.report do
-          100_000.times do
-            template.parse(xml)
+          10_000.times do
+            GOOGLE_BATCH_TPL.parse(GOOGLE_BATCH_XML)
           end
         end
 
         x.report do
-          100_000.times do
-            template.render(value)
+          10_000.times do
+            GOOGLE_BATCH_TPL.render(value)
           end
         end
       end

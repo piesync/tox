@@ -5,9 +5,11 @@ module Tox
     end
 
     def render(o)
-      Ox::Document.new(:version => '1.0') << \
+      Ox::Document.new(version: '1.0', encoding: 'UTF-8') << \
         [render_template(t, o)].flatten.first[:v]
     end
+
+    private
 
     def render_template(t, o)
       if t[:collect]
@@ -23,6 +25,12 @@ module Tox
             when :at   then el[c[:n]] = c[:v]
             end
           end
+
+          if t[:ns]
+            t[:ns].each do |k, v|
+              el[['xmlns', k].compact.join(':')] = v
+            end
+          end
         end
 
         { t: :el, v: e }
@@ -36,8 +44,6 @@ module Tox
         end
       end
     end
-
-    private
 
     attr_reader :t
   end
