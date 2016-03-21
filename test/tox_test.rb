@@ -393,6 +393,27 @@ class ToxTest < Minitest::Test
     end
   end
 
+  def test_render_with_additional_attributes
+    test_case_render(
+      %{
+        <name>
+          <first>Mike</first>
+          <last>Ross</last>
+        </name>
+      },
+      {
+        f:       'Mike',
+        l:       'Ross',
+        aliases: ''
+      }
+    ) do
+      el(:name, {
+        f: el(:first, text),
+        l: el(:last, text)
+      })
+    end
+  end
+
   def test_namespaces
     test_case(
       %{
