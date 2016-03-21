@@ -24,7 +24,7 @@ el('feed', mel('entry', {
       last_name: el('gd:familyName', text),
       prefix: el('gd:namePrefix', text),
       additional: el('gd:additionalName', text),
-      suffic: el('gd:nameSuffix', text),
+      suffix: el('gd:nameSuffix', text),
       full_name: el('gd:fullName', text)
     }),
     nickname: el('gContact:nickname', text),
@@ -63,7 +63,7 @@ el('feed', mel('entry', {
       country: el('gd:country', text),
       formatted_address: el('gd:formattedAddress', text)
     })),
-    deleted: el('deleted', text),
+    deleted: el('gd:deleted', text),
     relations: mel('gContact:relation', labelrel.({
       value: text
     })),
@@ -71,7 +71,7 @@ el('feed', mel('entry', {
       label: at('key'),
       value: at('value')
     }),
-    websites: mel('website', labelrel.({
+    websites: mel('gContact:website', labelrel.({
       url: at('href')
     })),
     groups: mel('gContact:groupMembershipInfo', {
