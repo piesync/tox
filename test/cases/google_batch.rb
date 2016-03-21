@@ -6,7 +6,10 @@ labelrel = -> (other) {
 }
 
 el('feed', mel('entry', {
+    id: el('id', text),
     etag: at('etag'),
+    updated_at: el('updated', text),
+    deleted: el('gd:deleted', text),
     batch_id: el('batch:id', text),
     batch_type: el('batch:operation', at('type')),
     batch_status: el('batch:status', {
@@ -14,7 +17,6 @@ el('feed', mel('entry', {
       reason: at('reason')
     }),
     batch_interrupted_reason: el('batch:interrupted', at('reason')),
-    id: el('id', text),
     categories: mel('category', {
       scheme: at('scheme'),
       term: at('term')
@@ -33,7 +35,6 @@ el('feed', mel('entry', {
       date: el('gd:when', at('startTime'))
     })),
     save_as: el('gContact:fileAs', text),
-    updated_at: el('updated', text),
     extra_info: el('content', text),
     links: mel('link', labelrel.({
       href: at('href')
@@ -63,7 +64,6 @@ el('feed', mel('entry', {
       country: el('gd:country', text),
       formatted_address: el('gd:formattedAddress', text)
     })),
-    deleted: el('gd:deleted', text),
     relations: mel('gContact:relation', labelrel.({
       value: text
     })),
