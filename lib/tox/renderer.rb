@@ -40,8 +40,8 @@ module Tox
         { t: :text, v: o }
       else
         o.map do |key, sub|
-          render_template(t[key], sub)
-        end
+          render_template(t[key], sub) if t[key]
+        end.compact
       end
     end
 
