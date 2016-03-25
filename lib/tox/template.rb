@@ -3,6 +3,10 @@ module Tox
     module DSL
       extend self
 
+      def template(d)
+        Template.new(d)
+      end
+
       def el(name, sub, ns = {})
         {
           cat: :elements,

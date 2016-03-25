@@ -3,6 +3,18 @@ require 'benchmark'
 require 'stringio'
 
 class ToxTest < Minitest::Test
+  def test_dsl_template
+    m = Module.new do
+      extend Tox::Template::DSL
+
+      def self.tpl
+        template(el(:name, text))
+      end
+    end
+
+    assert_kind_of(Tox::Template, m.tpl)
+  end
+
   def test_empty
     test_case(
       %{
