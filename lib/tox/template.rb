@@ -1,7 +1,9 @@
 module Tox
   class Template
     module DSL
-      def self.el(name, sub, ns = {})
+      extend self
+
+      def el(name, sub, ns = {})
         {
           cat: :elements,
           name: name.to_sym,
@@ -11,11 +13,11 @@ module Tox
         }
       end
 
-      def self.mel(name, sub)
+      def mel(name, sub)
         el(name, sub).merge(collect: true)
       end
 
-      def self.at(name)
+      def at(name)
         {
           cat: :attributes,
           name: name.to_sym,
@@ -24,7 +26,7 @@ module Tox
         }
       end
 
-      def self.text
+      def text
         {
           cat: :text,
           name: :text,
