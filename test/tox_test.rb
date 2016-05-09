@@ -426,6 +426,46 @@ class ToxTest < Minitest::Test
     end
   end
 
+  def test_render_numeric
+    test_case_render(
+      %{
+        <profile>
+          <age>31</age>
+          <points>12.34</points>
+        </profile>
+      },
+      {
+        age:    '31',
+        points: '12.34'
+      }
+    ) do
+      el(:profile, {
+        age:    el(:age, text),
+        points: el(:points, text)
+      })
+    end
+  end
+
+  def test_render_booleans
+    test_case_render(
+      %{
+        <profile>
+          <isTall>true</isTall>
+          <isFat>false</isFat>
+        </profile>
+      },
+      {
+        is_tall: true,
+        is_fat:  false
+      }
+    ) do
+      el(:profile, {
+        is_tall: el(:isTall, text),
+        is_fat:  el(:isFat, text)
+      })
+    end
+  end
+
   def test_namespaces
     test_case(
       %{
