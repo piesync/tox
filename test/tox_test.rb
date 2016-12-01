@@ -435,8 +435,8 @@ class ToxTest < Minitest::Test
         </profile>
       },
       {
-        age:    '31',
-        points: '12.34'
+        age:    31,
+        points: 12.34
       }
     ) do
       el(:profile, {
