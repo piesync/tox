@@ -5,8 +5,11 @@ module Tox
     end
 
     def render(o)
-      Ox::Document.new(version: '1.0', encoding: 'UTF-8') << \
-        [render_template(t, o)].flatten.first[:v]
+      rendered = [render_template(t, o)].flatten
+
+      if rendered.first && rendered.first[:v]
+        Ox::Document.new(version: '1.0', encoding: 'UTF-8') << rendered.first[:v]
+      end
     end
 
     private

@@ -25,10 +25,20 @@ module Tox
     end
 
     def result
-      @s.first
+      @s.first || default(@t.first)
     end
 
     protected
+
+    def default(t)
+      if t[:merge]
+        {}
+      elsif t[:collect]
+        []
+      elsif t.values.first
+        default(t.values.first)
+      end
+    end
 
     def push(t, v)
       @t << t

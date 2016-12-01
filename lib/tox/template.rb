@@ -53,8 +53,8 @@ module Tox
     end
 
     def render(o, verbose = false)
-      r = Renderer.new(@render_template)
-      Ox.dump(r.render(o))
+      r = Renderer.new(@render_template).render(o)
+      r ? Ox.dump(r) : ''
     end
 
     def self.dsl(&block)

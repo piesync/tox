@@ -102,6 +102,20 @@ class ToxTest < Minitest::Test
     end
   end
 
+  def test_simple_el_wrapped_empty
+    test_case_asym(
+      %{
+        <something/>
+      },
+      '',
+      {}
+    ) do
+      {
+        firstname: el(:name, text)
+      }
+    end
+  end
+
   def test_simple_el_double_wrapped
     test_case(
       %{
@@ -161,6 +175,29 @@ class ToxTest < Minitest::Test
         </names>
       },
       ['Mike Ross', 'Harvey Specter']
+    ) do
+      el(:names, mel(:name, text))
+    end
+  end
+
+  def test_collect_empty
+    test_case(
+      %{
+        <names/>
+      },
+      []
+    ) do
+      el(:names, mel(:name, text))
+    end
+
+    test_case_asym(
+      %{
+        <names></names>
+      },
+      %{
+        <names/>
+      },
+      []
     ) do
       el(:names, mel(:name, text))
     end
