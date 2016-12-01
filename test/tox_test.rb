@@ -530,7 +530,7 @@ class ToxTest < Minitest::Test
     template = Tox::Template.dsl(&template)
     assert_equal(
       scrub(xml),
-      scrub(template.render(value))
+      scrub(template.render(value, pretty: false))
     )
   end
 

@@ -52,9 +52,13 @@ module Tox
       p.result
     end
 
-    def render(o, verbose = false)
+    def render(o, pretty: false)
       r = Renderer.new(@render_template).render(o)
-      r ? Ox.dump(r) : ''
+
+      options = {}
+      options[:indent] = -1 if !pretty
+
+      r ? Ox.dump(r, options) : ''
     end
 
     def self.dsl(&block)
