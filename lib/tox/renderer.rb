@@ -24,7 +24,7 @@ module Tox
           [render_template(t[:sub], o)].flatten.each do |c|
             case c[:t]
             when :el   then el << c[:v]
-            when :text then el.replace_text(c[:v]) if c[:v]
+            when :text then el.replace_text(stringify(c[:v])) unless c[:v].nil?
             when :at   then el[c[:n]] = c[:v]
             end
           end
@@ -45,6 +45,14 @@ module Tox
         o.map do |key, sub|
           render_template(t[key], sub) if t[key]
         end.compact
+      end
+    end
+
+    def stringify(val)
+      if [String, Numeric, TrueClass, FalseClass].any? { |klass| klass === val }
+        val.to_s
+      else
+        raise ArgumentError, "Tox supports only string, numeric, boolean and nil types, but #{val.class} (#{val.inspect}) was given!"
       end
     end
 
