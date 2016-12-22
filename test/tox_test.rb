@@ -190,6 +190,15 @@ class ToxTest < Minitest::Test
       el(:names, mel(:name, text))
     end
 
+    test_case_render(
+      %{
+        <names/>
+      },
+      nil
+    ) do
+      el(:names, mel(:name, text))
+    end
+
     test_case_asym(
       %{
         <names></names>
@@ -229,8 +238,47 @@ class ToxTest < Minitest::Test
     end
   end
 
-  def test_collect_mixed
+  def test_collect_multi_alt
     test_case(
+      %{
+        <col>
+          <names>
+            <name>Mike Ross</name>
+            <name>Harvey Specter</name>
+          </names>
+          <ages>
+            <age>25</age>
+            <age>35</age>
+          </ages>
+        </col>
+        <smt>test</smt>
+      },
+      {
+        names: ['Mike Ross', 'Harvey Specter'],
+        ages: ['25', '35'],
+        smt: 'test'
+      }
+    ) do
+      merge(
+        el(:col, {
+          names: el(:names, mel(:name, text)),
+          ages: el(:ages, mel(:age, text))
+        }),
+        compose(smt: el(:smt, text))
+      )
+    end
+  end
+
+  def test_collect_mixed
+    test_case_asym(
+      %{
+        <col>
+          <name>Mike Ross</name>
+          <age>25</age>
+          <name>Harvey Specter</name>
+          <age>35</age>
+        </col>
+      },
       %{
         <col>
           <name>Mike Ross</name>
@@ -563,7 +611,7 @@ class ToxTest < Minitest::Test
 
   def test_case_parse(xml, value, &template)
     template = Tox::Template.dsl(&template)
-    assert_equal(value, template.parse(xml, false))
+    assert_equal(value, template.parse(xml))
   end
 
   def test_case_render(xml, value, &template)

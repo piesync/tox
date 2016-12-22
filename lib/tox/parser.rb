@@ -1,132 +1,88 @@
+require 'pp'
+
 module Tox
   class Parser
     def initialize(t)
-      @t = [t]
-      @s = []
-      @i = 0 # Number of levels ignoring
+      @s = [[t, nil]]
+      @i = 0
     end
 
     def start_element(name)
-      push_child(@t.last, :elements, name, nil)
+      unless push(descend(t, Template::Element, name, nil))
+        @i+=1
+      end
     end
 
     def end_element(name)
-      fold
-    end
-
-    def attr(name, str)
-      push_child(@t.last, :attributes, name, str)
-      fold
-    end
-
-    def text(str)
-      push_child(@t.last, :text, :text, str.force_encoding('UTF-8'))
-      fold
-    end
-
-    def result
-      @s.first || default(@t.first)
-    end
-
-    protected
-
-    def default(t)
-      if t[:merge]
-        {}
-      elsif t[:collect]
-        []
-      elsif t.values.first
-        default(t.values.first)
-      end
-    end
-
-    def push(t, v)
-      @t << t
-      @s << v
-    end
-
-    def push_child(t, cat, name, v)
-      if n = (t && t[cat] && t[cat][name])
-        push(n, v)
-      else
-        @i += 1
-      end
-    end
-
-    def fold
       if @i > 0
-        @i -= 1
+        @i-=1
       else
-        t = @t.pop
-        vi, vo = @s.pop, @s.pop
-
-        @s.push(merge(t, vi, vo))
+        fold
       end
     end
 
-    def merge(t, vi, vo)
-      merge   = t[:merge]
-      collect = t[:collect]
-
-      if collect && merge
-        vo ||= {}
-        if vo[merge]
-          vo[merge] = vo[merge].concat([vi])
-        else
-          vo[merge] = [vi]
-        end
-        vo
-      elsif collect
-        vo ||= []
-        vo << vi
-      elsif merge
-        vo ||= {}
-        vo[merge] = vi
-        vo
-      else # pass up
-        vi
-      end
-    end
-  end
-
-  class VerboseParser < Parser
-    def start_element(name)
-      puts "start #{name}"
-      super
-    end
-
-    def end_element(name)
-      puts "end #{name}"
-      super
-    end
-
-    def attr(name, str)
-      puts "attr #{name}"
-      super
+    def attr(name, value)
+      fold if push(descend(t, Template::Attribute, name, value))
     end
 
     def text(str)
-      puts "text"
-      super
+      fold if push(descend(t, Template::Text, nil, str.force_encoding('UTF-8')))
     end
 
-    protected
-
-    def push(*)
-      super
-      print_state('pushing')
+    # At the end, we have the root element with an optional bunch of Transformations on top.
+    # If the stack is still larger than the single root element, fold the remaining Transformations.
+    def result
+      @s.first[1] || t.default
     end
 
-    def fold(*)
-      super
-      print_state('folding')
+    private
+
+    def t
+      @s.last[0]
     end
 
-    def print_state(a)
-      puts "\n#{a}"
-      pp @t
-      pp @s
-      puts
+    def v
+      @s.last[1]
+    end
+
+    def descend(t, type, name, value)
+      # First we need to determine which child to descend into. If the current template is a Transformation,
+      # we need to look up the child to descend to using the index. If the current template is an XMLNode,
+      # we only have a valid child if the child is a Transformation or if it is a matching XMLNode.
+      child = if Template::Transformation === t
+        t.index[type][name]
+      else # Template::Element
+        t.child if Template::Transformation === t.child || (type === t.child && name == t.child.name)
+      end
+
+      # If there is no child, there is no template for this node, so it is ignored. If the child is a
+      # Transformation, we need to descend further.
+      if child
+        if Template::Transformation === child
+          if d = descend(child, type, name, value)
+            [[child, (v && t.value(child, v)) || child.default]].concat(d)
+          end
+        else
+          [[child, value]]
+        end
+      end
+    end
+
+    def push(ss)
+      @s.concat(ss) if ss
+    end
+
+    # When we fold, We don't want to fold Transformations prematurely. We only fold Transformations
+    # when the parent XmlNode is closed. This means that we fold all Transformation on top of the stack
+    # first and then do the fold for the closed XmlNode.
+    def fold
+      fold_single
+      fold_single while Template::Transformation === t
+    end
+
+    def fold_single
+      ti, vi, to, vo = *@s.pop, *@s.pop
+      @s.push([to, to.fold(ti, vo, vi)])
     end
   end
 end

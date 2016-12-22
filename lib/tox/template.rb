@@ -7,47 +7,52 @@ module Tox
         Template.new(d)
       end
 
-      def el(name, sub, ns = {})
-        {
-          cat: :elements,
-          name: name.to_sym,
-          collect: false,
-          sub: sub,
-          ns: ns
-        }
+      def el(name, child, ns = {})
+        Element.new(name.to_sym, ns, compose(child))
       end
 
-      def mel(name, sub)
-        el(name, sub).merge(collect: true)
+      def mel(name, child)
+        Collect.new(el(name, child))
+      end
+
+      def collect(child)
+        Collect.new(compose(child))
       end
 
       def at(name)
-        {
-          cat: :attributes,
-          name: name.to_sym,
-          collect: false,
-          sub: {}
-        }
+        Attribute.new(name.to_sym)
       end
 
       def text
-        {
-          cat: :text,
-          name: :text,
-          collect: false,
-          sub: {}
-        }
+        Text.new
+      end
+
+      def compose(o)
+        if Hash === o
+          Compose.new(o)
+        else
+          o
+        end
+      end
+
+      def compose_all(els)
+        els.map do |el|
+          compose(el)
+        end
+      end
+
+      def merge(*children)
+        Merge.new(compose_all(children))
       end
     end
 
     def initialize(render_template)
       @render_template = render_template
-      @parse_template  = invert(render_template)
+      @parse_template  = render_template
     end
 
-    def parse(xml, verbose = false)
-      klass = verbose ? VerboseParser : Parser
-      p = klass.new(@parse_template)
+    def parse(xml)
+      p = Parser.new(@parse_template)
       Ox.sax_parse(p, xml)
       p.result
     end
@@ -62,27 +67,153 @@ module Tox
     end
 
     def self.dsl(&block)
-      Template.new(DSL.module_eval(&block))
+      Template.new(Element.new(nil, nil,
+        DSL.compose(DSL.module_eval(&block))))
     end
 
     private
 
-    def invert(t)
-      if t[:cat] && t[:cat].is_a?(Symbol)
-        {
-          t[:cat] => {
-            t[:name] => invert(t[:sub]).merge(
-              merge: t[:merge],
-              collect: t[:collect]
-            )
-          }
-        }
-      else
-        t.inject({}) do |h, (wrap, it)|
-          h.merge!(invert(it.merge(merge: wrap))) do |k, o, n|
-            o.merge(n)
+    # These are for matching actual XML Nodes ----------
+
+    class XMLNode < Struct.new(:name, :ns)
+      def default
+        nil
+      end
+
+      def nodes
+        [self]
+      end
+    end
+
+    class Element < XMLNode
+      attr_reader :child
+
+      def initialize(name, ns, child)
+        super(name, ns)
+        @child = child
+      end
+
+      def default
+        child.default
+      end
+
+      def value(child, v)
+        v
+      end
+
+      def fold(_, _, v)
+        v
+      end
+    end
+
+    class Attribute < XMLNode
+    end
+
+    class Text < XMLNode
+    end
+
+    # These are for transforming the structure ---------
+
+    class Transformation
+      attr_reader :children
+
+      def initialize(children)
+        @children = children
+      end
+
+      def index
+        @index ||= {
+          Element => {},
+          Attribute => {},
+          Text => {}
+        }.tap do |index|
+          children.each do |t|
+            t.nodes.each do |ct|
+              index[ct.class][ct.name] = t
+            end
           end
         end
+      end
+
+      def nodes
+        children.flat_map(&:nodes)
+      end
+
+      def value(child, v)
+        nil
+      end
+    end
+
+    # Composes subtemplates in a hash.
+    class Compose < Transformation
+      def initialize(dict)
+        super(dict.values)
+        @dict = dict
+        @idict = dict.invert
+      end
+
+      def default
+        {}
+      end
+
+      def value(child, v)
+        v[@idict[child]]
+      end
+
+      def walk(v)
+        v && v.each do |k, v|
+          yield(@dict[k], v) if @dict[k]
+        end
+      end
+
+      def fold(t, vo, vi)
+        vo[@idict[t]] = vi
+        vo
+      end
+    end
+
+    # Collects multiple occurences of given template in a list.
+    class Collect < Transformation
+      def initialize(child)
+        @child = child
+        super([child])
+      end
+
+      def default
+        []
+      end
+
+      def walk(v)
+        v && v.each do |vv|
+          yield(@child, vv)
+        end
+      end
+
+      def fold(t, vo, vi)
+        vo << vi
+        vo
+      end
+    end
+
+    # Merges hash results of multiple templates.
+    class Merge < Transformation
+      def default
+        {}
+      end
+
+      def value(child, v)
+        v
+      end
+
+      def walk(v)
+        children.each do |t|
+          yield(t, v)
+        end
+      end
+
+      def fold(t, vo, vi)
+        vo.merge!(vi)
+        vo
       end
     end
   end

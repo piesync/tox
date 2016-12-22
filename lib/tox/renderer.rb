@@ -5,46 +5,58 @@ module Tox
     end
 
     def render(o)
-      rendered = [render_template(t, o)].flatten
+      rendered = render_template(@t.child, o).map(&:last)
 
-      if rendered.first && rendered.first[:v]
-        Ox::Document.new(version: '1.0', encoding: 'UTF-8') << rendered.first[:v]
+      if rendered
+        Ox::Document.new(version: '1.0', encoding: 'UTF-8').tap do |doc|
+          rendered.each do |node|
+            doc << node
+          end
+        end
       end
     end
 
     private
 
-    def render_template(t, o)
-      if t[:collect]
-        o.map do |sub|
-          render_template(t.merge(collect: false), sub)
-        end
-      elsif t[:cat] == :elements
-        e = Ox::Element.new(t[:name]).tap do |el|
-          [render_template(t[:sub], o)].flatten.each do |c|
-            case c[:t]
-            when :el   then el << c[:v]
-            when :text then el.replace_text(stringify(c[:v])) unless c[:v].nil?
-            when :at   then el[c[:n]] = c[:v]
-            end
-          end
-
-          if t[:ns]
-            t[:ns].each do |k, v|
-              el[['xmlns', k].compact.join(':')] = v
-            end
-          end
+    def render_template(t, v)
+      case t
+      when Template::Transformation
+        nodes = []
+        t.walk(v) do |tt, vv|
+          nodes.concat(render_template(tt, vv))
         end
 
-        { t: :el, v: e }
-      elsif t[:cat] == :attributes
-        { t: :at, v: o, n: t[:name] }
-      elsif t[:cat] == :text
-        { t: :text, v: o }
+        nodes
+
+      when Template::Element
+        e = Ox::Element.new(t.name)
+
+        render_template(t.child, v).each do |type, value, name = nil|
+          case type
+          when :e
+            e << value
+          when :a
+            e[name] = value
+          when :t
+            e.replace_text(stringify(value)) unless value.nil?
+          end
+        end
+
+        if t.ns
+          t.ns.each do |k, v|
+            e[['xmlns', k].compact.join(':')] = v
+          end
+        end
+
+        [[:e, e]]
+
+      when Template::Attribute
+        [v && [:a, v, t.name]]
+
+      when Template::Text
+        [[:t, v]]
       else
-        o.map do |key, sub|
-          render_template(t[key], sub) if t[key]
-        end.compact
+        t
       end
     end
 
