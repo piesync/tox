@@ -65,12 +65,12 @@ The above template is actually translated to something like:
 el(:profile, compose({
   id: at(:id),
   name: el(:name, text),
-  friends: collect(el(:friend, {
+  friends: collect(el(:friend, compose({
     name: el(:name, text),
     age: el(:age, text),
     title: at(:title),
     tags: el(:tags, collect(el(:tag, text)))
-  }))
+  })))
 }))
 ```
 
