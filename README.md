@@ -59,6 +59,38 @@ template.render(v)
 # Outputs input xml
 ```
 
+The above template is actually translated to something like:
+
+```ruby
+el(:profile, compose({
+  id: at(:id),
+  name: el(:name, text),
+  friends: collect(el(:friend, {
+    name: el(:name, text),
+    age: el(:age, text),
+    title: at(:title),
+    tags: el(:tags, collect(el(:tag, text)))
+  }))
+}))
+```
+
+As you can see, it's a mixture of nodes matching xml elements, and nodes transforming the output structure. If you strip out the transformations, the template should match a subset of the xml. Each XML element can only be specified once in the template. Transformations can hold custom behavior for distributing to and collecting from it's subtree(s). Another example:
+
+```ruby
+template = Tox.dsl do
+  el(:names, merge(
+    const('array', at(:type)),
+    compose(names: collect(el(:name, text)))
+  ))
+end
+
+template.render(names: ['Mike', 'Harvey'])
+# <names type="array">
+#   <name>Mike</name>
+#   <name>Harvey</name>
+# </names>
+```
+
 Read [Tox Tests](https://github.com/piesync/tox/tree/master/test/tox_test.rb) for more examples.
 
 ## Installation
