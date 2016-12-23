@@ -44,6 +44,10 @@ module Tox
       def merge(*children)
         Merge.new(compose_all(children))
       end
+
+      def const(value, child)
+        Const.new(value, child)
+      end
     end
 
     def initialize(render_template)
@@ -212,8 +216,32 @@ module Tox
       end
 
       def fold(t, vo, vi)
-        vo.merge!(vi)
+        vo.merge!(vi) if Hash === vi
         vo
+      end
+    end
+
+    class Const < Transformation
+      def initialize(value, child)
+        @value = value
+        @child = child
+        super([child])
+      end
+
+      def default
+        nil
+      end
+
+      def value(child, v)
+        @value
+      end
+
+      def walk(v)
+        yield(@child, @value)
+      end
+
+      def fold(*)
+        nil
       end
     end
   end

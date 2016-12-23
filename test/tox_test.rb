@@ -569,6 +569,37 @@ class ToxTest < Minitest::Test
     end
   end
 
+  def test_const
+    test_case(
+      %{
+        <names type="array">
+          <name>Mike</name>
+          <name>Harvey</name>
+        </names>
+      },
+      {
+        names: ['Mike', 'Harvey']
+      }
+    ) do
+      el(:names, merge(
+        const('array', at(:type)),
+        compose(names: mel(:name, text))
+      ))
+    end
+
+    test_case(
+      %{
+        <names type="array"/>
+      },
+      {}
+    ) do
+      el(:names, merge(
+        const('array', at(:type)),
+        compose(names: mel(:name, text))
+      ))
+    end
+  end
+
   GOOGLE_BATCH_XML = File.read(
     File.expand_path('../cases/google_batch.xml', __FILE__)
   )
