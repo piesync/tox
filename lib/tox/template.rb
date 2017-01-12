@@ -4,7 +4,7 @@ module Tox
       extend self
 
       def template(d)
-        Template.new(d)
+        Template.new(Element.new(nil, nil, DSL.compose(d)))
       end
 
       def el(name, child, ns = {})
