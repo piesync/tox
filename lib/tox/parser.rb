@@ -8,7 +8,7 @@ module Tox
     end
 
     def start_element(name)
-      unless push(descend(t, Template::Element, name, nil))
+      unless @i == 0 && push(descend(t, Template::Element, name, nil))
         @i+=1
       end
     end

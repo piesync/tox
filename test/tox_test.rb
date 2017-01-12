@@ -351,6 +351,7 @@ class ToxTest < Minitest::Test
           <ignored/>
           <deep>
             <ignored b='4'>true</ignored>
+            <first>ignored</first>
           </deep>
           <last>Ross</last>
         </name>
