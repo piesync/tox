@@ -4,7 +4,7 @@ module Tox
       extend self
 
       def template(d)
-        Template.new(Element.new(nil, nil, DSL.compose(d)))
+        Template.new(d)
       end
 
       def el(name, child, ns = {})
@@ -50,19 +50,18 @@ module Tox
       end
     end
 
-    def initialize(render_template)
-      @render_template = render_template
-      @parse_template  = render_template
+    def initialize(template)
+      @template = Element.new(nil, nil, DSL.compose(template))
     end
 
     def parse(xml)
-      p = Parser.new(@parse_template)
+      p = Parser.new(@template)
       Ox.sax_parse(p, xml)
       p.result
     end
 
     def render(o, pretty: false)
-      r = Renderer.new(@render_template).render(o)
+      r = Renderer.new(@template).render(o)
 
       options = {}
       options[:indent] = -1 if !pretty
@@ -71,8 +70,7 @@ module Tox
     end
 
     def self.dsl(&block)
-      Template.new(Element.new(nil, nil,
-        DSL.compose(DSL.module_eval(&block))))
+      Template.new(DSL.module_eval(&block))
     end
 
     private
