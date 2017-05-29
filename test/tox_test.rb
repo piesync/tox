@@ -552,6 +552,19 @@ class ToxTest < Minitest::Test
     end
   end
 
+  def test_newlines
+    test_case(
+      %{
+        <description>Hello\nWorld</description>
+      },
+      {
+        description: "Hello\nWorld"
+      }
+    ) do
+      { description: el(:description, text) }
+    end
+  end
+
   def test_namespaces
     test_case(
       %{
