@@ -77,7 +77,14 @@ module Tox
 
     # These are for matching actual XML Nodes ----------
 
-    class XMLNode < Struct.new(:name, :ns)
+    class XMLNode
+      attr_accessor :name, :ns
+
+      def initialize(name = nil, ns = nil)
+        @name = name
+        @ns   = ns
+      end
+
       def default
         nil
       end
