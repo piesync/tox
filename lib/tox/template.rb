@@ -56,7 +56,7 @@ module Tox
 
     def parse(xml)
       p = Parser.new(@template)
-      Ox.sax_parse(p, xml)
+      Ox.sax_parse(p, xml, skip: :skip_none)
       p.result
     end
 
