@@ -29,6 +29,10 @@ module Tox
       fold if push(descend(t, Template::Text, nil, str.force_encoding('UTF-8')))
     end
 
+    def cdata(str)
+      fold if push(descend(t, Template::Text, nil, str.force_encoding('UTF-8')))
+    end
+
     # At the end, we have the root element with an optional bunch of Transformations on top.
     # If the stack is still larger than the single root element, fold the remaining Transformations.
     def result

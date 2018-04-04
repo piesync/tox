@@ -87,6 +87,17 @@ class ToxTest < Minitest::Test
     end
   end
 
+  def test_cdata
+    test_case_parse(
+      %{
+        <name><![CDATA[Mike]]></name>
+      },
+      "Mike"
+    ) do
+      el(:name, text)
+    end
+  end
+
   def test_simple_el_wrapped
     test_case(
       %{
