@@ -76,6 +76,17 @@ class ToxTest < Minitest::Test
     end
   end
 
+  def test_invalid_xml_chars
+    test_case(
+      %{
+        <name>&#x0001;</name>
+      },
+      "\u0001"
+    ) do
+      el(:name, text)
+    end
+  end
+
   def test_io
     test_case_parse(
       StringIO.new(%{
