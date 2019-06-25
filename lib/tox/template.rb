@@ -50,6 +50,10 @@ module Tox
       end
     end
 
+    OX_OPTIONS = {
+      effort: :tolerant # do not raise on invalid characters
+    }.freeze
+
     def initialize(template)
       @template = Element.new(nil, nil, DSL.compose(template))
     end
@@ -63,8 +67,8 @@ module Tox
     def render(o, pretty: false)
       r = Renderer.new(@template).render(o)
 
-      options = {}
-      options[:indent] = -1 if !pretty
+      options = OX_OPTIONS
+      options = options.merge(indent: -1) unless pretty
 
       r ? Ox.dump(r, options) : ''
     end
